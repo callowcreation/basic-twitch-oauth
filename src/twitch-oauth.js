@@ -60,13 +60,13 @@ TwitchOAuth.prototype.confirmState = function(state) {
 TwitchOAuth.prototype.getEndpoint = async function(url) {
     return fetch(url, {
         method: 'GET',
-        headers: getBearerHeaders(access_token)
-    });
+        headers: this.getBearerHeaders()
+    }).then(result => result.json());
 }
 
-function getBearerHeaders(access_token) {
+TwitchOAuth.prototype.getBearerHeaders = function() {
     return {
-        'Authorization': 'Bearer ' + access_token,
+        'Authorization': 'Bearer ' + this.authenticated.access_token,
         'Content-Type': 'application/json'
     }
 }

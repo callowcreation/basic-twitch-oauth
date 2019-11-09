@@ -16,9 +16,7 @@ const twitchOAuth = new TwitchOAuth({
     client_secret: process.env.CLIENT_SECRET,
     redirect_uri: process.env.REDIRECT_URI,
     scopes: [
-        'user:edit:broadcast',
-        'channel_check_subscription',
-        'channel_feed_read'
+        'user:edit:broadcast'
     ]
 }, state);
 
@@ -36,15 +34,21 @@ if (module === require.main) {
         const req_data = qs.parse(req.url.split('?')[1]);
         const code = req_data['code'];
         const state = req_data['state'];
-        console.log('state=' + state);
 
-        if(twitchOAuth.confirmState(state)) {
+        if (twitchOAuth.confirmState(state)) {
             twitchOAuth.fetchToken(code).then(json => {
                 if (json.expires_in) {
                     twitchOAuth.setAuthenticated(json);
                     console.log('authenticated');
+
+                    const url = `https://api.twitch.tv/helix/users/extensions?user_id${101223367}`;
+                    twitchOAuth.getEndpoint(url)
+                        .then(result => {
+                            console.log(result);
+                        });
+
                     res.redirect('/');
-                } else {     
+                } else {
                     res.redirect('/failed');
                 }
             });
