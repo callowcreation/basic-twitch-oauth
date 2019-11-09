@@ -2,12 +2,15 @@
 const fetch = require('node-fetch');
 const { URLSearchParams } = require('url');
 
-function TwitchOAuth({ client_id, client_secret, redirect_uri, scopes }) {
+
+function TwitchOAuth({ client_id, client_secret, redirect_uri, scopes }, state) {
 
     this.client_id = client_id;
     this.client_secret = client_secret;
     this.redirect_uri = redirect_uri;
     this.scopes = scopes.join(' ');
+
+    this.state = state;
 
     this.authenticated = {
         access_token: null,
@@ -21,7 +24,7 @@ function TwitchOAuth({ client_id, client_secret, redirect_uri, scopes }) {
         `redirect_uri=${encodeURIComponent(this.redirect_uri)}`,
         `response_type=code`,
         `scope=${encodeURIComponent(this.scopes)}`,
-        `state=myRANDstate4daBADIES`
+        `state=${state}`
     ];
     const urlQuery = urlParams.join('&');
 
@@ -49,6 +52,10 @@ TwitchOAuth.prototype.fetchToken = async function (code) {
         })
     }).then(result => result.json()).catch(e => console.error(e));
 }
+
+TwitchOAuth.prototype.confirmState = function(state) {
+    return state === this.state;
+};
 
 TwitchOAuth.prototype.getEndpoint = async function(url) {
     return fetch(url, {

@@ -1,11 +1,15 @@
 require('dotenv').config();
 
 const express = require('express');
+const crypto = require('crypto');
 const qs = require('querystring');
 
 const TwitchOAuth = require('./src/twitch-oauth');
 
 const app = express();
+
+const buffer = crypto.randomBytes(16);
+const state = buffer.toString('hex');
 
 const twitchOAuth = new TwitchOAuth({
     client_id: process.env.CLIENT_ID,
@@ -13,9 +17,10 @@ const twitchOAuth = new TwitchOAuth({
     redirect_uri: process.env.REDIRECT_URI,
     scopes: [
         'user:edit:broadcast',
-        'channel_check_subscription'
+        'channel_check_subscription',
+        'channel_feed_read'
     ]
-});
+}, state);
 
 if (module === require.main) {
 
@@ -30,14 +35,22 @@ if (module === require.main) {
     app.get('/auth-callback', (req, res) => {
         const req_data = qs.parse(req.url.split('?')[1]);
         const code = req_data['code'];
+        const state = req_data['state'];
+        console.log('state=' + state);
 
-        twitchOAuth.fetchToken(code).then(json => {
-            if (json.redirect_uri) {
-                twitchOAuth.setAuthenticated(json);
-                console.log('authenticated');
-            }
-            res.redirect('/');
-        });
+        if(twitchOAuth.confirmState(state)) {
+            twitchOAuth.fetchToken(code).then(json => {
+                if (json.expires_in) {
+                    twitchOAuth.setAuthenticated(json);
+                    console.log('authenticated');
+                    res.redirect('/');
+                } else {     
+                    res.redirect('/failed');
+                }
+            });
+        } else {
+            res.redirect('/failed');
+        }
 
     });
 
