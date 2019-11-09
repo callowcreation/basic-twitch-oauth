@@ -16,7 +16,8 @@ const twitchOAuth = new TwitchOAuth({
     client_secret: process.env.CLIENT_SECRET,
     redirect_uri: process.env.REDIRECT_URI,
     scopes: [
-        'user:edit:broadcast'
+        'user:edit:broadcast',
+        'viewing_activity_read'
     ]
 }, state);
 
@@ -43,7 +44,6 @@ if (module === require.main) {
         if (twitchOAuth.confirmState(state)) {
             twitchOAuth.fetchToken(code).then(json => {
                 if (json.expires_in) {
-                    twitchOAuth.setAuthenticated(json);
                     console.log('authenticated');
                     res.redirect('/');
                 } else {
@@ -59,6 +59,10 @@ if (module === require.main) {
     const server = app.listen(process.env.PORT || 4000, () => {
         const port = server.address().port;
         console.log(`App listening on port ${port}`);
+
+        const url = twitchOAuth.authorizeUrl;
+        const open = require('open');
+        open(url);
     });
 
 }
