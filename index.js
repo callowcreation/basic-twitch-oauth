@@ -23,7 +23,12 @@ const twitchOAuth = new TwitchOAuth({
 if (module === require.main) {
 
     app.get('/', (req, res) => {
-        res.status(200).send(`<a href="/login">Login</a>`);
+        res.status(200).send(`<a href="/login">Login</a><br /><a href="/test">Test</a>`);
+    });
+
+    app.get('/test', (req, res) => {
+        const url = `https://api.twitch.tv/helix/users/extensions?user_id${101223367}`;
+        twitchOAuth.getEndpoint(url).then(json => res.status(200).json(json));
     });
 
     app.get('/login', (req, res) => {
@@ -40,13 +45,6 @@ if (module === require.main) {
                 if (json.expires_in) {
                     twitchOAuth.setAuthenticated(json);
                     console.log('authenticated');
-
-                    const url = `https://api.twitch.tv/helix/users/extensions?user_id${101223367}`;
-                    twitchOAuth.getEndpoint(url)
-                        .then(result => {
-                            console.log(result);
-                        });
-
                     res.redirect('/');
                 } else {
                     res.redirect('/failed');
