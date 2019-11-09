@@ -1,0 +1,32 @@
+{
+  "name": "basic-twitch-oauth",
+  "version": "1.0.0",
+  "description": "Basic Twitch OAuth Flow",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/callowcreation/basic-twitch-oauth.git"
+  },
+  "keywords": [
+    "Twitch",
+    "API",
+    "OAuth",
+    "Node.js"
+  ],
+  "author": "caLLowCreation",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/callowcreation/basic-twitch-oauth/issues"
+  },
+  "homepage": "https://github.com/callowcreation/basic-twitch-oauth#readme",
+  "dependencies": {
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "node-fetch": "^2.6.0",
+    "querystring": "^0.2.0",
+    "url": "^0.11.0"
+  }
+}
