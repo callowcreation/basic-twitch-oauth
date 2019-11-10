@@ -71,4 +71,4 @@ if (module === require.main) {
     });
 
 }
-module.exports = app;
+module.exports = TwitchOAuth;
