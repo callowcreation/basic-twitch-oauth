@@ -24,15 +24,21 @@ const twitchOAuth = new TwitchOAuth({
 if (module === require.main) {
 
     app.get('/', (req, res) => {
-        res.status(200).send(`<a href="/login">Login</a><br /><a href="/test">Test</a>`);
+        res.status(200).send(`<a href="/authorize">Authorize</a>`);
+    });
+
+    app.get('/home', (req, res) => {
+        res.status(200).send(`<a href="/test">Test</a>`);
     });
 
     app.get('/test', (req, res) => {
         const url = `https://api.twitch.tv/helix/users/extensions?user_id${101223367}`;
-        twitchOAuth.getEndpoint(url).then(json => res.status(200).json(json));
+        twitchOAuth.getEndpoint(url)
+            .then(json => res.status(200).json(json))
+            .catch(err => console.error(err));
     });
 
-    app.get('/login', (req, res) => {
+    app.get('/authorize', (req, res) => {
         res.redirect(twitchOAuth.authorizeUrl);
     });
 
@@ -41,19 +47,18 @@ if (module === require.main) {
         const code = req_data['code'];
         const state = req_data['state'];
 
-        if (twitchOAuth.confirmState(state)) {
+        if (twitchOAuth.confirmState(state) === true) {
             twitchOAuth.fetchToken(code).then(json => {
-                if (json.expires_in) {
+                if (json.success === true) {
                     console.log('authenticated');
-                    res.redirect('/');
+                    res.redirect('/home');
                 } else {
                     res.redirect('/failed');
                 }
-            });
+            }).catch(err => console.error(err));
         } else {
             res.redirect('/failed');
         }
-
     });
 
     const server = app.listen(process.env.PORT || 4000, () => {

@@ -28,6 +28,7 @@ function TwitchOAuth({ client_id, client_secret, redirect_uri, scopes }, state) 
     this.state = state;
 
     this.authenticated = {
+        success: false,
         access_token: null,
         refresh_token: null,
         expires_in: 0,
@@ -54,6 +55,7 @@ TwitchOAuth.prototype.setAuthenticated = function ({ access_token, refresh_token
     this.authenticated.access_token = access_token;
     this.authenticated.refresh_token = refresh_token;
     this.authenticated.expires_in = expires_in;
+    this.success = true;
 
     const d = new Date();
     const seconds = Math.round(d.getTime() / 1000);
@@ -74,8 +76,7 @@ TwitchOAuth.prototype.fetchToken = async function (code) {
             grant_type: 'authorization_code',
             redirect_uri: this.redirect_uri
         })
-    }).then(result => result.json()).then(json => this.setAuthenticated(json))
-        .catch(e => console.error(e));
+    }).then(result => result.json()).then(json => this.setAuthenticated(json)).catch(e => e);
 };
 
 TwitchOAuth.prototype.fetchRefreshToken = async function () {
@@ -83,13 +84,12 @@ TwitchOAuth.prototype.fetchRefreshToken = async function () {
         method: 'POST',
         headers: getBasicHeaders(this.client_id, this.client_secret),
         body: new URLSearchParams({
-            grant_type: 'refresh_token',
-            refresh_token: this.authenticated.refresh_token,
             client_id: this.client_id,
             client_secret: this.client_secret,
+            grant_type: 'refresh_token',
+            refresh_token: this.authenticated.refresh_token
         })
-    }).then(result => result.json()).then(json => this.setAuthenticated(json))
-        .catch(e => console.error(e));
+    }).then(result => result.json()).then(json => this.setAuthenticated(json)).catch(e => e);
 };
 
 TwitchOAuth.prototype.refreshTokenIfNeeded = async function () {
@@ -97,7 +97,7 @@ TwitchOAuth.prototype.refreshTokenIfNeeded = async function () {
     const seconds = Math.round(d.getTime() / 1000);
 
     if (seconds > this.authenticated.expires_time) {
-        return this.fetchRefreshToken().catch(e => console.error(e));
+        return this.fetchRefreshToken().catch(e => e);
     }
 
     return Promise.resolve();
@@ -108,8 +108,8 @@ TwitchOAuth.prototype.getEndpoint = async function (url) {
         return fetch(url, {
             method: 'GET',
             headers: getBearerHeaders(this.authenticated.access_token)
-        }).then(result => result.json()).catch(e => console.error(e));
-    }).catch(e => console.error(e));
+        }).then(result => result.json()).catch(e => e);
+    }).catch(e => e);
 };
 
 module.exports = TwitchOAuth;
