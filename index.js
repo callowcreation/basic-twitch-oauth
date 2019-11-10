@@ -32,7 +32,7 @@ if (module === require.main) {
     });
 
     app.get('/test', (req, res) => {
-        const url = `https://api.twitch.tv/helix/users/extensions?user_id${101223367}`;
+        const url = `https://api.twitch.tv/helix/users/extensions?user_id=${101223367}`;
         twitchOAuth.getEndpoint(url)
             .then(json => res.status(200).json(json))
             .catch(err => console.error(err));
