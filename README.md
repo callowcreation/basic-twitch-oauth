@@ -18,7 +18,7 @@ Intended to reduce the expected prerequisite experience required for implementin
 
 The statements below are still a bit beyond your experiences and you need/want to use a Twitch API… is my motivation.
 
-Twitch API(s) now require that some endpoint request must have an authorization in the header.  To acquire an access token for a Twitch API you must be familiar with an authentication flow.  Implicit code, authorization code, and client credentials are the flows supported by Twitch.
+Twitch API(s) now require that some endpoint request must have an authorization in the header.  To acquire an access token for a Twitch API you must be familiar with an authentication flow.  The flows supported by Twitch are Implicit code, authorization code, and client credentials.
 
 
 See Twitch [Authentication Docs](https://dev.twitch.tv/docs/authentication)

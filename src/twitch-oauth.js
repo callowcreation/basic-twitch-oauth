@@ -1,7 +1,13 @@
+/*!
+ * basic-twitch-oauth
+ * Copyright(c) 2019-present caLLowCreation
+ * MIT Licensed
+ */
+
+'use strict';
 
 const fetch = require('node-fetch');
 const { URLSearchParams } = require('url');
-
 
 function getBasicHeaders(client_id, client_secret) {
     return {

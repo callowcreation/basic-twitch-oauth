@@ -1,3 +1,5 @@
+'use strict';
+
 const TwitchOAuth = require('./src/twitch-oauth');
 
 if (module === require.main) {
@@ -6,7 +8,6 @@ if (module === require.main) {
     const express = require('express');
     const crypto = require('crypto');
     const qs = require('querystring');
-
 
     const app = express();
 
@@ -22,7 +23,6 @@ if (module === require.main) {
             'viewing_activity_read'
         ]
     }, state);
-
 
     app.get('/', (req, res) => {
         res.status(200).send(`<a href="/authorize">Authorize</a>`);
