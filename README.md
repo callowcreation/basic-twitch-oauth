@@ -33,7 +33,7 @@ See Twitch [Authentication Docs](https://dev.twitch.tv/docs/authentication)
 Required reading [Getting Started with the Twitch API](https://dev.twitch.tv/docs/api)
 
 ```sh
-$ npm install basic-twitch-oauth
+$ npm install @callowcreation/basic-twitch-oauth
 ```
 
 ## Loading and configuration
