@@ -1,27 +1,28 @@
-require('dotenv').config();
-
-const express = require('express');
-const crypto = require('crypto');
-const qs = require('querystring');
-
 const TwitchOAuth = require('./src/twitch-oauth');
 
-const app = express();
-
-const buffer = crypto.randomBytes(16);
-const state = buffer.toString('hex');
-
-const twitchOAuth = new TwitchOAuth({
-    client_id: process.env.CLIENT_ID,
-    client_secret: process.env.CLIENT_SECRET,
-    redirect_uri: process.env.REDIRECT_URI,
-    scopes: [
-        'user:edit:broadcast',
-        'viewing_activity_read'
-    ]
-}, state);
-
 if (module === require.main) {
+    require('dotenv').config();
+
+    const express = require('express');
+    const crypto = require('crypto');
+    const qs = require('querystring');
+
+
+    const app = express();
+
+    const buffer = crypto.randomBytes(16);
+    const state = buffer.toString('hex');
+
+    const twitchOAuth = new TwitchOAuth({
+        client_id: process.env.CLIENT_ID,
+        client_secret: process.env.CLIENT_SECRET,
+        redirect_uri: process.env.REDIRECT_URI,
+        scopes: [
+            'user:edit:broadcast',
+            'viewing_activity_read'
+        ]
+    }, state);
+
 
     app.get('/', (req, res) => {
         res.status(200).send(`<a href="/authorize">Authorize</a>`);
@@ -69,6 +70,6 @@ if (module === require.main) {
         const open = require('open');
         open(url);
     });
-
 }
+
 module.exports = TwitchOAuth;

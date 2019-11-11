@@ -55,7 +55,8 @@ TwitchOAuth.prototype.setAuthenticated = function ({ access_token, refresh_token
     this.authenticated.access_token = access_token;
     this.authenticated.refresh_token = refresh_token;
     this.authenticated.expires_in = expires_in;
-    this.success = true;
+    
+    this.authenticated.success = true;
 
     const d = new Date();
     const seconds = Math.round(d.getTime() / 1000);
