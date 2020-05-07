@@ -15,11 +15,12 @@ function getBasicHeaders(client_id, client_secret) {
     };
 }
 
-function getBearerHeaders(access_token) {
-    return {
-        'Authorization': 'Bearer ' + access_token,
-        'Content-Type': 'application/json'
-    }
+function getBearerHeaders(client_id, access_token) {
+	return {
+		'Authorization': 'Bearer ' + access_token,
+		'Client-ID': client_id,
+		'Content-Type': 'application/json'
+	}
 }
 
 function TwitchOAuth({ client_id, client_secret, redirect_uri, scopes }, state) {
@@ -114,7 +115,7 @@ TwitchOAuth.prototype.getEndpoint = async function (url) {
     return this.refreshTokenIfNeeded().then(() => {
         return fetch(url, {
             method: 'GET',
-            headers: getBearerHeaders(this.authenticated.access_token)
+            headers: getBearerHeaders(this.client_id, this.authenticated.access_token)
         }).then(result => result.json()).catch(e => e);
     }).catch(e => e);
 };
