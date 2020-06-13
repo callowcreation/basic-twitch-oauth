@@ -4,7 +4,8 @@
   "description": "Intended to reduce the expected prerequisite experience required for implementing Twitch OAuth to use the Twitch API(s)",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "devserver": "nodemon --exec ts-node index.ts"
   },
   "repository": {
     "type": "git",
@@ -23,6 +24,7 @@
   },
   "homepage": "https://github.com/callowcreation/basic-twitch-oauth#readme",
   "dependencies": {
+    "@types/node-fetch": "^2.5.7",
     "crypto": "^1.0.1",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
@@ -31,5 +33,11 @@
     "querystring": "^0.2.0",
     "url": "^0.11.0"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@types/express": "^4.17.6",
+    "@types/node": "^14.0.13",
+    "nodemon": "^2.0.4",
+    "ts-node": "^8.10.2",
+    "typescript": "^3.9.5"
+  }
 }
