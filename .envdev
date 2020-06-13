@@ -1,0 +1,5 @@
+CLIENT_ID=
+CLIENT_SECRET=
+REDIRECT_URI=http://localhost:4000/auth-callback
+
+PORT=4000
