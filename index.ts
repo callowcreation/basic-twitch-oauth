@@ -1,67 +1,68 @@
-
+//.env config
 import { config } from "dotenv";
+config();
 
+//the library in question
 import TwitchOAuth from './src/twitch-oauth';
 
-import express from 'express';
+//other utility libraries
 import crypto from 'crypto';
+import express from 'express';
 
-if (module === require.main) {
-	config();
+//random number generation
+const buffer = crypto.randomBytes(16);
+const state = buffer.toString('hex');
 
-    const app = express();
+//the twitch oauth object itself
+const twitchOAuth = new TwitchOAuth({
+	client_id: process.env.CLIENT_ID || '',
+	client_secret: process.env.CLIENT_SECRET || '',
+	redirect_uri: process.env.REDIRECT_URI || '',
+	scopes: [
+		'viewing_activity_read'
+	]
+}, state);
 
-    const buffer = crypto.randomBytes(16);
-	const state = buffer.toString('hex');
-	
-    const twitchOAuth = new TwitchOAuth({
-        client_id: process.env.CLIENT_ID || '',
-        client_secret: process.env.CLIENT_SECRET || '',
-        redirect_uri: process.env.REDIRECT_URI || '',
-        scopes: [
-            'user:edit:broadcast',
-            'viewing_activity_read'
-        ]
-    }, state);
+//routes for a dummy pages
+const app = express();
 
-    app.get('/', (_req, res) => {
-        res.status(200).send(`<a href="/authorize">Authorize</a>`);
-    });
+app.get('/', (req, res) => {
+	res.status(200).send(`<p>If you're seeing this in your browser, it means connection was a success.</p>`);
+});
 
-    app.get('/home', (_req, res) => {
-        res.status(200).send(`<a href="/test">Test</a>`);
-    });
+app.get('/success', (req, res) => {
+	res.status(200).send(`<p>If you're seeing this, then the token retreval was successful.</p>`);
+});
 
-    app.get('/test', (_req, res) => {
-        const url: string = `https://api.twitch.tv/helix/users/extensions?user_id=${101223367}`;
-        twitchOAuth.getEndpoint(url)
-            .then(json => res.status(200).json(json))
-            .catch(err => console.error(err));
-    });
+app.get('/failed', (req, res) => {
+	res.status(400).send(`<p>If you're seeing this, then something went wrong.</p>`);
+});
 
-    app.get('/authorize', (_req, res) => {
-        res.redirect(twitchOAuth.authorizeUrl);
-    });
+//receive info from twitch
+app.get('/auth-callback', async (req, res) => {
+	const code: string = req.query.code as string;
+	const state: string = req.query.state as string;
 
-    app.get('/auth-callback', async (req, res) => {
-        const code: string = req.query.code as string;
-        const state: string = req.query.state as string;
-		try {
-			twitchOAuth.confirmState(state);
-			await twitchOAuth.fetchToken(code);
-		} catch (err) {
-			console.error(err);
-			res.redirect('/failed');
-		}
+	try {
+		//check the state
+		twitchOAuth.confirmState(state);
 
-    });
+		//get the token (stored in twitchOAuth)
+		await twitchOAuth.fetchToken(code);
 
-    app.listen(process.env.PORT || 4000, () => {
-        console.log(`App listening on port ${process.env.PORT || 4000}`);
+		res.redirect('/success');
 
-        const open = require('open');
-        open(twitchOAuth.authorizeUrl);
-    });
-}
+	} catch (err) {
+		console.error(err);
+		res.redirect('/failed');
+	}
+});
 
-export default TwitchOAuth;
+//open the port
+app.listen(process.env.PORT || 4000, () => {
+	console.log(`App listening on port ${process.env.PORT || 4000}`);
+
+	//open the page
+	const open = require('open');
+	open(twitchOAuth.authorizeUrl);
+});
