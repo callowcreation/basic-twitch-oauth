@@ -49,6 +49,7 @@ if (module === require.main) {
 		try {
 			twitchOAuth.confirmState(state);
 			await twitchOAuth.fetchToken(code);
+			res.redirect('/home');
 		} catch (err) {
 			console.error(err);
 			res.redirect('/failed');
