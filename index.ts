@@ -1,4 +1,5 @@
-'use strict';
+
+import { config } from "dotenv";
 
 import TwitchOAuth from './src/twitch-oauth';
 
@@ -6,14 +7,13 @@ import express from 'express';
 import crypto from 'crypto';
 
 if (module === require.main) {
-	require('dotenv').config();
-	
+	config();
 
     const app = express();
 
     const buffer = crypto.randomBytes(16);
-    const state = buffer.toString('hex');
-
+	const state = buffer.toString('hex');
+	
     const twitchOAuth = new TwitchOAuth({
         client_id: process.env.CLIENT_ID || '',
         client_secret: process.env.CLIENT_SECRET || '',
@@ -43,22 +43,17 @@ if (module === require.main) {
         res.redirect(twitchOAuth.authorizeUrl);
     });
 
-    app.get('/auth-callback', (req, res) => {
+    app.get('/auth-callback', async (req, res) => {
         const code: string = req.query.code as string;
         const state: string = req.query.state as string;
+		try {
+			twitchOAuth.confirmState(state);
+			await twitchOAuth.fetchToken(code);
+		} catch (err) {
+			console.error(err);
+			res.redirect('/failed');
+		}
 
-        if (twitchOAuth.confirmState(state) === true) {
-            twitchOAuth.fetchToken(code).then(json => {
-                if (json.refresh_token) {
-                    console.log('Authenticated');
-                    res.redirect('/home');
-                } else {
-                    res.redirect('/token-failed');
-                }
-            }).catch(err => console.error(err));
-        } else {
-            res.redirect('/state-failed');
-        }
     });
 
     app.listen(process.env.PORT || 4000, () => {
