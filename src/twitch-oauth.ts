@@ -27,9 +27,25 @@ interface TokenOptions {
 	expires_in: number
 }
 
+enum METHOD {
+	GET = 'GET',
+	POST = 'POST',
+	PUT = 'PUT'
+}
+
+enum GRANT_TYPE {
+	REFRESH_TOKEN = 'refresh_token',
+	AUTHORIZATION_CODE = 'authorization_code'
+}
+
 const SECONDS_OFF: number = 60;
 const DOMAIN: string = 'https://id.twitch.tv/oauth2';
 
+const CONTENT_TYPE_JSON: string = 'application/json';
+
+const ERROR_MESSAGES = {
+	state: 'The response includes a state parameter error'
+};
 
 const EMPTY_AUTHENTICATED: Authenticated = {
 	access_token: '',
@@ -41,6 +57,7 @@ const EMPTY_AUTHENTICATED: Authenticated = {
 class TwitchOAuth {
 
 	private oauthOptions: TwitchOAuthOptions;
+
 	private state: string;
 
 	private authenticated: Authenticated = EMPTY_AUTHENTICATED;
@@ -50,23 +67,21 @@ class TwitchOAuth {
 		this.state = state;
 	}
 
-	private get scopes(): string {
-		return this.oauthOptions.scopes.join(' ');
-	}
-
+	/**
+	 * OAuth authorization code flow url
+	 * 
+	 * Use to initiate the oauth process
+	 * 
+	 */
 	get authorizeUrl(): string {
 		const urlParams = [
 			`client_id=${this.oauthOptions.client_id}`,
 			`redirect_uri=${encodeURIComponent(this.oauthOptions.redirect_uri)}`,
 			`response_type=code`,
-			`scope=${encodeURIComponent(this.scopes)}`,
+			`scope=${encodeURIComponent(this.oauthOptions.scopes.join(' '))}`,
 			`state=${this.state}`
 		];
 		return `${DOMAIN}/authorize?${urlParams.join('&')}`;
-	}
-
-	get isAuthenticated(): boolean {
-		return this.authenticated.refresh_token !== '';
 	}
 
 	/**
@@ -81,7 +96,7 @@ class TwitchOAuth {
 	 */
 	confirmState(state: string): void {
 		if (state !== this.state) {
-			throw new Error('The response includes the state parameter error');
+			throw new Error(ERROR_MESSAGES.state);
 		}
 	}
 	
@@ -94,20 +109,19 @@ class TwitchOAuth {
 	 */
 	async fetchToken(code: string): Promise<void> {
 		return fetch(`${DOMAIN}/token`, {
-			method: 'POST',
+			method: METHOD.POST,
 			headers: this.getBasicHeaders(this.oauthOptions.client_id, this.oauthOptions.client_secret),
 			body: new URLSearchParams({
 				client_id: this.oauthOptions.client_id,
 				client_secret: this.oauthOptions.client_secret,
 				code: code,
-				grant_type: 'authorization_code',
+				grant_type: GRANT_TYPE.AUTHORIZATION_CODE,
 				redirect_uri: this.oauthOptions.redirect_uri
 			})
 		})
 			.then(this.checkStatus)
 			.then(this.toJson)
-			.then(this.setAuthenticated.bind(this))
-			.catch(error => { throw error; });
+			.then(this.setAuthenticated.bind(this)); // Ratstail91 FTW .bind(this) fixed undefine 'this'
 	}
 
 	/**
@@ -117,28 +131,18 @@ class TwitchOAuth {
 	 */
 	async fetchRefreshToken(): Promise<void> {
 		return fetch(`${DOMAIN}/token`, {
-			method: 'POST',
+			method: METHOD.POST,
 			headers: this.getBasicHeaders(this.oauthOptions.client_id, this.oauthOptions.client_secret),
 			body: new URLSearchParams({
 				client_id: this.oauthOptions.client_id,
 				client_secret: this.oauthOptions.client_secret,
-				grant_type: 'refresh_token',
+				grant_type: GRANT_TYPE.REFRESH_TOKEN,
 				refresh_token: this.authenticated.refresh_token
 			})
 		})
 			.then(this.checkStatus)
 			.then(this.toJson)
-			.then(this.setAuthenticated.bind(this))
-			.catch(error => { throw error; });
-	}
-
-	private async refreshTokenIfNeeded(): Promise<void> {
-		const date: Date = new Date();
-		const seconds: number = Math.round(date.getTime() / 1000);
-		if (seconds > this.authenticated.expires_time) {
-			this.authenticated = EMPTY_AUTHENTICATED;
-			await this.fetchRefreshToken().catch(error => { throw error; });
-		}
+			.then(this.setAuthenticated.bind(this)); // Ratstail91 FTW .bind(this) fixed undefine 'this'
 	}
 
 	/**
@@ -150,21 +154,65 @@ class TwitchOAuth {
 	 */
 	async getEndpoint(url: string): Promise<any> {
 		await this.refreshTokenIfNeeded();
-		return this.fetchEndpoint(url).catch(error => { throw error; });
+		return this.fetchEndpoint(url, METHOD.GET);
 	}
 
-	private fetchEndpoint(url: string): Promise<TokenOptions> {
-		return fetch(url, {
-			method: 'GET',
+	/**
+	 * 
+	 * @param url Endpoint to make request
+	 * @param body JavaScript object to be send with the request
+	 * 
+	 * @throws When request fails or jason parsing fails
+	 * 
+	 */
+	async postEndpoint(url: string, body: any): Promise<any> {
+		await this.refreshTokenIfNeeded();
+		return this.fetchEndpoint(url, METHOD.POST, body);
+	}
+
+	/**
+	 * 
+	 * @param url Endpoint to make request
+	 * @param body JavaScript object to be send with the request
+	 * 
+	 * @throws When request fails or jason parsing fails
+	 * 
+	 */
+	async putEndpoint(url: string, body: any): Promise<any> {
+		await this.refreshTokenIfNeeded();
+		return this.fetchEndpoint(url, METHOD.PUT, body);
+	}
+
+	private async refreshTokenIfNeeded(): Promise<void> {
+		const date: Date = new Date();
+		const seconds: number = Math.round(date.getTime() / 1000);
+		if (seconds > this.authenticated.expires_time) {
+			this.authenticated = EMPTY_AUTHENTICATED;
+			await this.fetchRefreshToken();
+		}
+	}
+
+	private fetchEndpoint(url: string, method: METHOD, body?: any): Promise<TokenOptions> {
+		const options = {
+			method: method,
+			body: typeof body !== 'string' ? JSON.stringify(body) : body,
 			headers: this.getBearerHeaders(this.oauthOptions.client_id, this.authenticated.access_token)
-		})
+		};
+
+		if(!body) delete options.body;
+
+		return fetch(url, options)
 			.then(this.checkStatus)
-			.then(this.toJson)
-			.catch(error => { throw error; });
+			.then(this.toResult);
 	}
 
 	private toJson(res: Response): Promise<TokenOptions> {
 		return res.json();
+	}
+
+	private toResult(res: Response): Promise<any> {
+		const contentType = res.headers.get('content-type') as string;
+		return contentType && contentType.includes(CONTENT_TYPE_JSON) ? res.json() : res.text();
 	}
 
 	private checkStatus(res: Response): Response {
@@ -183,7 +231,6 @@ class TwitchOAuth {
 		const date: Date = new Date();
 		const seconds = Math.round(date.getTime() / 1000);
 		this.authenticated.expires_time = (seconds + this.authenticated.expires_in) - SECONDS_OFF;
-		console.log('Set Expires Time', this.authenticated.expires_time);
 	}
 
 	private getBasicHeaders(client_id: string, client_secret: string) {
@@ -196,10 +243,9 @@ class TwitchOAuth {
 		return {
 			'Authorization': 'Bearer ' + access_token,
 			'Client-ID': client_id,
-			'Content-Type': 'application/json'
+			'Content-Type': CONTENT_TYPE_JSON
 		};
 	}
-
 }
 
 export default TwitchOAuth;
