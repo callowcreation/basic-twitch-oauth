@@ -4,7 +4,6 @@
 		"module": "CommonJS",
 		"strict": true,
 		"jsx": "preserve",
-		//"importHelpers": true,
 		"strictPropertyInitialization": false,
 		"moduleResolution": "node",
 		"resolveJsonModule": true,
@@ -13,9 +12,7 @@
 		"allowSyntheticDefaultImports": true,
 		"sourceMap": true,
 		"baseUrl": ".",
-		"types": [
-			"webpack-env"
-		],
+		"types": [],
 		"paths": {
 			"@/*": [
 				"src/*"
@@ -34,8 +31,7 @@
 		"server/**/*.ts",
 		"shared/**/*.ts",
 		"tests/**/*.ts",
-		"tests/**/*.tsx", 
-		"src/twitch-oauth.ts"
+		"tests/**/*.tsx"
 	],
 	"exclude": [
 		"node_modules"
