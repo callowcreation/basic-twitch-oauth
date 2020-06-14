@@ -24,6 +24,9 @@ if (module === require.main) {
 		]
 	}, state);
 
+	const error_message = 'Something went wrong <a href="/home">return home</a><br />Read more in the server terminal'
+	const broadcaster_id = '75987197';
+
 	app.get('/', (_req, res) => {
 		res.status(200).send(`<a href="/authorize">Authorize</a>`);
 	});
@@ -32,56 +35,72 @@ if (module === require.main) {
 		res.status(200).send(
 			`<a href="/extensions">Example Extensions (GET request)</a><br />
 			<a href="/moderation">Example AutoMod (POST request)</a><br />
-			<a href="/tags">Example Tags (PUT request)</a><br />`
+			<a href="/tags">Example Tags (PUT request)</a><br /><br />`
 		);
 	});
 
 	app.get('/extensions', (_req, res) => {
-		const url: string = `https://api.twitch.tv/helix/users/extensions?user_id=${75987197}`;
+		const url: string = `https://api.twitch.tv/helix/users/extensions?user_id=${broadcaster_id}`;
 		twitchOAuth.getEndpoint(url)
 			.then(json => res.status(200).json(json))
-			.catch(err => console.error(err));
+			.catch(err => { 
+				console.error(err); 
+				res.send(error_message); 
+			});
 	});
 
 	app.get('/moderation', (_req, res) => {
-		const url: string = `https://api.twitch.tv/helix/moderation/enforcements/status?broadcaster_id=${75987197}`;
+		const url: string = `https://api.twitch.tv/helix/moderation/enforcements/status?broadcaster_id=${broadcaster_id}`;
 		const data = [
 			{ msg_id: '0', msg_text: 'I killing this', user_id: '101223367' },
 			{ msg_id: '1', msg_text: 'that was a death blow', user_id: '75987197' }
 		];
 		twitchOAuth.postEndpoint(url, { data })
 			.then(json => res.status(200).json(json))
-			.catch(err => console.error(err));
+			.catch(err => { 
+				console.error(err); 
+				res.send(error_message); 
+			});
 	});
 
 	app.get('/tags', (_req, res) => {
-		const url: string = `https://api.twitch.tv/helix/streams/tags?broadcaster_id=${75987197}`;
+		const url: string = `https://api.twitch.tv/helix/streams/tags?broadcaster_id=${broadcaster_id}`;
 		const tag_ids = [
 			'621fb5bf-5498-4d8f-b4ac-db4d40d401bf',
 			'79977fb9-f106-4a87-a386-f1b0f99783dd'
 		];
 		twitchOAuth.putEndpoint(url, { tag_ids })
 			.then(json => res.status(200).json(json))
-			.catch(err => console.error(err));
+			.catch(err => { 
+				console.error(err); 
+				res.send(error_message); 
+			});
 	});
 
+	app.get('/auth-callback', async (req, res) => {
+		try {
+			const code: string = req.query.code as string;
+			const state: string = req.query.state as string;
+
+			twitchOAuth.confirmState(state);
+			
+			await twitchOAuth.fetchToken(code);
+
+			res.redirect('/home');
+		} catch (err) {
+			console.error(err);
+			res.send(error_message); 
+		}
+	});
+
+	// ---- Initiate the oauth process
+	// ---- Or below app.listen(process.env.PORT...
 	app.get('/authorize', (_req, res) => {
 		res.redirect(twitchOAuth.authorizeUrl);
 	});
 
-	app.get('/auth-callback', async (req, res) => {
-		const code: string = req.query.code as string;
-		const state: string = req.query.state as string;
-		try {
-			twitchOAuth.confirmState(state);
-			await twitchOAuth.fetchToken(code);
-			res.redirect('/home');
-		} catch (err) {
-			console.error(err);
-			res.redirect('/failed');
-		}
-	});
-
+	// ---- Initiate the oauth process
+	// ---- Or above app.get('/authorize'...
 	app.listen(process.env.PORT || 4000, () => {
 		console.log(`App listening on port ${process.env.PORT || 4000}`);
 
