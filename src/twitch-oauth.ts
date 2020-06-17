@@ -148,13 +148,13 @@ class TwitchOAuth {
 	/**
 	 * 
 	 * @param url Endpoint to make request
+	 * @param body JavaScript object to be send with the request
 	 * 
 	 * @throws When request fails or jason parsing fails
 	 * 
 	 */
-	async getEndpoint(url: string): Promise<any> {
-		await this.refreshTokenIfNeeded();
-		return this.fetchEndpoint(url, METHOD.GET);
+	async getEndpoint(url: string, body?: any): Promise<any> {
+		return this.fetchEndpoint(url, METHOD.GET, body);
 	}
 
 	/**
@@ -165,8 +165,7 @@ class TwitchOAuth {
 	 * @throws When request fails or jason parsing fails
 	 * 
 	 */
-	async postEndpoint(url: string, body: any): Promise<any> {
-		await this.refreshTokenIfNeeded();
+	async postEndpoint(url: string, body?: any): Promise<any> {
 		return this.fetchEndpoint(url, METHOD.POST, body);
 	}
 
@@ -178,21 +177,22 @@ class TwitchOAuth {
 	 * @throws When request fails or jason parsing fails
 	 * 
 	 */
-	async putEndpoint(url: string, body: any): Promise<any> {
-		await this.refreshTokenIfNeeded();
+	async putEndpoint(url: string, body?: any): Promise<any> {
 		return this.fetchEndpoint(url, METHOD.PUT, body);
 	}
 
-	private async refreshTokenIfNeeded(): Promise<void> {
-		const date: Date = new Date();
-		const seconds: number = Math.round(date.getTime() / 1000);
-		if (seconds > this.authenticated.expires_time) {
-			this.authenticated = EMPTY_AUTHENTICATED;
-			await this.fetchRefreshToken();
-		}
-	}
+	/**
+	 * 
+	 * @param url Endpoint to make request
+	 * @param method GET, POST, PUT
+	 * @param body JavaScript object to be send with the request
+	 * 
+	 * @throws When request fails or json parsing fails
+	 */
+	async fetchEndpoint(url: string, method: METHOD, body?: any): Promise<any> {
+		
+		await this.refreshTokenIfNeeded();
 
-	private fetchEndpoint(url: string, method: METHOD, body?: any): Promise<TokenOptions> {
 		const options = {
 			method: method,
 			body: typeof body !== 'string' ? JSON.stringify(body) : body,
@@ -204,6 +204,15 @@ class TwitchOAuth {
 		return fetch(url, options)
 			.then(this.checkStatus)
 			.then(this.toResult);
+	}
+
+	private async refreshTokenIfNeeded(): Promise<void> {
+		const date: Date = new Date();
+		const seconds: number = Math.round(date.getTime() / 1000);
+		if (seconds > this.authenticated.expires_time) {
+			this.authenticated = EMPTY_AUTHENTICATED;
+			await this.fetchRefreshToken();
+		}
 	}
 
 	private toJson(res: Response): Promise<TokenOptions> {
