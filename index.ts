@@ -39,42 +39,45 @@ if (module === require.main) {
 		);
 	});
 
-	app.get('/extensions', (_req, res) => {
+	app.get('/extensions', async (_req, res) => {
 		const url: string = `https://api.twitch.tv/helix/users/extensions?user_id=${broadcaster_id}`;
-		twitchOAuth.getEndpoint(url)
-			.then(json => res.status(200).json(json))
-			.catch(err => { 
-				console.error(err); 
-				res.send(error_message); 
-			});
+		try {
+			const json = await twitchOAuth.getEndpoint(url);
+			res.status(200).json(json);
+		} catch (error) {
+			console.error(error); 
+			res.send(error_message); 
+		}
 	});
 
-	app.get('/moderation', (_req, res) => {
+	app.get('/moderation', async (_req, res) => {
 		const url: string = `https://api.twitch.tv/helix/moderation/enforcements/status?broadcaster_id=${broadcaster_id}`;
 		const data = [
 			{ msg_id: '0', msg_text: 'I killing this', user_id: '101223367' },
 			{ msg_id: '1', msg_text: 'that was a death blow', user_id: '75987197' }
 		];
-		twitchOAuth.postEndpoint(url, { data })
-			.then(json => res.status(200).json(json))
-			.catch(err => { 
-				console.error(err); 
-				res.send(error_message); 
-			});
+		try {
+			const json = await twitchOAuth.postEndpoint(url, { data });
+			res.status(200).json(json);
+		} catch (error) {
+			console.error(error); 
+			res.send(error_message); 
+		}
 	});
 
-	app.get('/tags', (_req, res) => {
+	app.get('/tags', async (_req, res) => {
 		const url: string = `https://api.twitch.tv/helix/streams/tags?broadcaster_id=${broadcaster_id}`;
 		const tag_ids = [
 			'621fb5bf-5498-4d8f-b4ac-db4d40d401bf',
 			'79977fb9-f106-4a87-a386-f1b0f99783dd'
 		];
-		twitchOAuth.putEndpoint(url, { tag_ids })
-			.then(json => res.status(200).json(json))
-			.catch(err => { 
-				console.error(err); 
-				res.send(error_message); 
-			});
+		try {
+			const json = await twitchOAuth.putEndpoint(url, { tag_ids });
+			res.status(200).json(json)
+		} catch (error) {
+			console.error(error); 
+			res.send(error_message); 
+		}
 	});
 
 	app.get('/auth-callback', async (req, res) => {
@@ -108,5 +111,3 @@ if (module === require.main) {
 		open(twitchOAuth.authorizeUrl);
 	});
 }
-
-export default TwitchOAuth;
