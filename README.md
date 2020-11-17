@@ -61,24 +61,21 @@ app.get('/authorize', (req, res) => {
 });
 
 // redirect_uri ends up here
-app.get('/auth-callback', (req, res) => {
+app.get('/auth-callback', async (req, res) => {
     const qs = require('querystring');
     const req_data = qs.parse(req.url.split('?')[1]);
     const code = req_data['code'];
     const state = req_data['state'];
 
-    if (twitchOAuth.confirmState(state) === true) {
-        twitchOAuth.fetchToken(code).then(json => {
-            if (json.success === true) {
-                console.log('authenticated');
-                res.redirect('/home');
-            } else {
-                res.redirect('/failed');
-            }
-        }).catch(err => console.error(err));
-    } else {
-        res.redirect('/failed');
-    }
+	try {
+		twitchOAuth.confirmState(state);
+		await twitchOAuth.fetchToken(code);
+		res.redirect('/home');
+	} catch (err) {
+		console.error(err);
+		res.redirect('/failed');
+	}
+	
 });
 
 ```
