@@ -40,9 +40,10 @@ $ npm install @callowcreation/basic-twitch-oauth
 A Node server is required, express is used here.
 
 ```js
-import TwitchOAuth from './src/twitch-oauth';
-import crypto from 'crypto';
-import express from 'express';
+
+const express = require('express');
+const crypto = require('crypto');
+const qs = require('querystring');
 
 const app = express();
 
