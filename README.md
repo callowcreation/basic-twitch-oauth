@@ -40,25 +40,24 @@ $ npm install @callowcreation/basic-twitch-oauth
 A Node server is required, express is used here.
 
 ```js
-const TwitchOAuth = require('twitch-oauth');
+import TwitchOAuth from './src/twitch-oauth';
+import crypto from 'crypto';
+import express from 'express';
 
-const state = 'a-Unique-ID-98765432-For_Security';
+const app = express();
+
+const buffer = crypto.randomBytes(16);
+const state = buffer.toString('hex');
 
 const twitchOAuth = new TwitchOAuth({
     client_id: process.env.CLIENT_ID,
     client_secret: process.env.CLIENT_SECRET,
     redirect_uri: process.env.REDIRECT_URI,
     scopes: [
-        'user:edit:broadcast'
+        'user:edit:broadcast',
+		'moderation:read'
     ]
 }, state);
-
-const express = require('express');
-const app = express();
-
-app.get('/authorize', (req, res) => {
-    res.redirect(twitchOAuth.authorizeUrl);
-});
 
 // redirect_uri ends up here
 app.get('/auth-callback', async (req, res) => {
@@ -83,19 +82,28 @@ app.get('/auth-callback', async (req, res) => {
 ## Common Usage
 
 ```js
-app.get('/user', (req, res) => {
-    const url = `https://api.twitch.tv/helix/users/extensions?user_id=101223367`;
-    twitchOAuth.getEndpoint(url)
-        .then(json => res.status(200).json(json));
+app.get('/extensions', async (req, res) => {
+	const url: string = `https://api.twitch.tv/helix/users/extensions?user_id=${broadcaster_id}`;
+	const json = await twitchOAuth.getEndpoint(url);
+	res.status(200).json(json);
 });
 ```
 
 #### Handling exceptions
 
 ```js
-twitchOAuth.getEndpoint(`https://api.twitch.tv/helix/users/extensions?user_id=101223367`)
-    .then(json => console.log("User Data", json))
-    .catch(err => console.error(err));
+try {
+	const url: string = `https://api.twitch.tv/helix/moderation/enforcements/status?broadcaster_id=${broadcaster_id}`;
+	const data = [
+		{ msg_id: '0', msg_text: 'I killing this', user_id: '101223367' },
+		{ msg_id: '1', msg_text: 'that was a death blow', user_id: '75987197' }
+	];
+	const json = await twitchOAuth.postEndpoint(url, { data });
+	res.status(200).json(json);
+} catch (error) {
+	console.error(error); 
+	res.send(error_message); 
+}
 ```
 
 ## Contact
