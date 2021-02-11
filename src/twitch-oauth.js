@@ -83,8 +83,11 @@ TwitchOAuth.prototype.setAuthenticated = async function ({ access_token, refresh
 	this.authenticated.expires_in = expires_in;
 
 	const d = new Date();
-	const seconds = Math.round(d.getTime() / 1000);
-	this.authenticated.expires_time = (seconds + this.authenticated.expires_in) - this.secondsOff;
+	const ms = d.getTime();
+
+	this.authenticated.expires_time = (ms + (this.authenticated.expires_in * 1000)) - (this.secondsOff * 1000);
+	
+	return access_token;
 };
 
 /**
@@ -125,17 +128,20 @@ TwitchOAuth.prototype.fetchRefreshToken = async function () {
 
 TwitchOAuth.prototype.refreshTokenIfNeeded = async function () {
 	const d = new Date();
-	const seconds = Math.round(d.getTime() / 1000);
+	const time = d.getTime();
 
-	if (seconds > this.authenticated.expires_time) {
+	if (time > this.authenticated.expires_time) {
 		return this.fetchRefreshToken();
 	}
 
-	return Promise.resolve();
+	return this.authenticated.access_token;
 };
 
 TwitchOAuth.prototype.fetchEndpoint = async function (url, options) {
-	return this.refreshTokenIfNeeded().then(() => fetch(url, options).then(checkStatus).then(toResult));
+	return this.refreshTokenIfNeeded().then(access_token => {
+		options.headers = getBearerHeaders(this.client_id, access_token);
+		return fetch(url, options).then(checkStatus).then(toResult);
+	});
 };
 
 /**
@@ -147,8 +153,7 @@ TwitchOAuth.prototype.fetchEndpoint = async function (url, options) {
  */
 TwitchOAuth.prototype.getEndpoint = async function (url) {
 	return this.fetchEndpoint(url, {
-		method: 'GET',
-		headers: getBearerHeaders(this.client_id, this.authenticated.access_token)
+		method: 'GET'
 	});
 };
 
@@ -163,7 +168,6 @@ TwitchOAuth.prototype.getEndpoint = async function (url) {
 TwitchOAuth.prototype.postEndpoint = async function (url, body) {
 	return this.fetchEndpoint(url, {
 		method: 'POST',
-		headers: getBearerHeaders(this.client_id, this.authenticated.access_token),
 		body: typeof body !== 'string' ? JSON.stringify(body) : body
 	});
 };
@@ -179,7 +183,6 @@ TwitchOAuth.prototype.postEndpoint = async function (url, body) {
 TwitchOAuth.prototype.putEndpoint = async function (url, body) {
 	return this.fetchEndpoint(url, {
 		method: 'PUT',
-		headers: getBearerHeaders(this.client_id, this.authenticated.access_token),
 		body: typeof body !== 'string' ? JSON.stringify(body) : body
 	});
 };
@@ -195,7 +198,6 @@ TwitchOAuth.prototype.putEndpoint = async function (url, body) {
 TwitchOAuth.prototype.patchEndpoint = async function (url, body) {
 	return this.fetchEndpoint(url, {
 		method: 'PATCH',
-		headers: getBearerHeaders(this.client_id, this.authenticated.access_token),
 		body: typeof body !== 'string' ? JSON.stringify(body) : body
 	});
 };
@@ -209,8 +211,7 @@ TwitchOAuth.prototype.patchEndpoint = async function (url, body) {
  */
 TwitchOAuth.prototype.deleteEndpoint = async function (url) {
 	return this.fetchEndpoint(url, {
-		method: 'DELETE',
-		headers: getBearerHeaders(this.client_id, this.authenticated.access_token)
+		method: 'DELETE'
 	});
 };
 
