@@ -114,16 +114,25 @@ TwitchOAuth.prototype.fetchToken = async function (code) {
 };
 
 TwitchOAuth.prototype.fetchRefreshToken = async function () {
+	return fetchRefreshTokenWithCredentials(this.client_id, this.client_secret, this.authenticated.refresh_token).then(json => this.setAuthenticated(json));
+};
+
+/**
+ * 
+ * Does not store credentials
+ * 
+ */
+TwitchOAuth.prototype.fetchRefreshTokenWithCredentials = async function (client_id, client_secret, refresh_token) {
 	return fetch('https://id.twitch.tv/oauth2/token', {
 		method: 'POST',
-		headers: getBasicHeaders(this.client_id, this.client_secret),
+		headers: getBasicHeaders(client_id, client_secret),
 		body: new URLSearchParams({
-			client_id: this.client_id,
-			client_secret: this.client_secret,
+			client_id: client_id,
+			client_secret: client_secret,
 			grant_type: 'refresh_token',
-			refresh_token: this.authenticated.refresh_token
+			refresh_token: refresh_token
 		})
-	}).then(checkStatus).then(toResult).then(json => this.setAuthenticated(json));
+	}).then(checkStatus).then(toResult);
 };
 
 TwitchOAuth.prototype.refreshTokenIfNeeded = async function () {
@@ -138,10 +147,12 @@ TwitchOAuth.prototype.refreshTokenIfNeeded = async function () {
 };
 
 TwitchOAuth.prototype.fetchEndpoint = async function (url, options) {
-	return this.refreshTokenIfNeeded().then(access_token => {
-		options.headers = getBearerHeaders(this.client_id, access_token);
-		return fetch(url, options).then(checkStatus).then(toResult);
-	});
+	return this.refreshTokenIfNeeded().then(access_token => this.fetchEndpointWithCredentials(this.client_id, access_token, url, options));
+};
+
+TwitchOAuth.prototype.fetchEndpointWithCredentials = async function (client_id, access_token, url, options) {
+	options.headers = getBearerHeaders(client_id, access_token);
+	return fetch(url, options).then(checkStatus).then(toResult);
 };
 
 /**
