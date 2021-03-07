@@ -114,7 +114,7 @@ TwitchOAuth.prototype.fetchToken = async function (code) {
 };
 
 TwitchOAuth.prototype.fetchRefreshToken = async function () {
-	return fetchRefreshTokenWithCredentials(this.client_id, this.client_secret, this.authenticated.refresh_token).then(json => this.setAuthenticated(json));
+	return this.fetchRefreshTokenWithCredentials(this.client_id, this.client_secret, this.authenticated.refresh_token).then(json => this.setAuthenticated(json));
 };
 
 /**
