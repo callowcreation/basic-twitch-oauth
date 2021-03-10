@@ -226,4 +226,8 @@ TwitchOAuth.prototype.deleteEndpoint = async function (url) {
 	});
 };
 
+TwitchOAuth.prototype.getAuthenticated = function () {
+	return this.authenticated;
+};
+
 module.exports = TwitchOAuth;
