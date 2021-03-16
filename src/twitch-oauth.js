@@ -9,6 +9,8 @@
 const fetch = require('node-fetch');
 const { URLSearchParams } = require('url');
 
+const SECONDS_OFF = 60;
+
 function getBasicHeaders(client_id, client_secret) {
 	return {
 		'Authorization': 'Basic ' + (Buffer.from(client_id + ':' + client_secret).toString('base64'))
@@ -20,7 +22,7 @@ function getBearerHeaders(client_id, access_token) {
 		'Authorization': 'Bearer ' + access_token,
 		'Client-ID': client_id,
 		'Content-Type': 'application/json'
-	}
+	};
 }
 
 async function checkStatus(res) {
@@ -34,9 +36,6 @@ async function toResult(res) {
 }
 
 function TwitchOAuth({ client_id, client_secret, redirect_uri, scopes }, state) {
-
-	this.secondsOff = 60;
-
 	this.client_id = client_id;
 	this.client_secret = client_secret;
 	this.redirect_uri = redirect_uri;
@@ -60,7 +59,9 @@ function TwitchOAuth({ client_id, client_secret, redirect_uri, scopes }, state) 
 	];
 	const urlQuery = urlParams.join('&');
 
-	this.authorizeUrl = `https://id.twitch.tv/oauth2/authorize?${urlQuery}`
+	this.authorizeUrl = `https://id.twitch.tv/oauth2/authorize?${urlQuery}`;
+	
+	this.validateUrl = 'https://id.twitch.tv/oauth2/validate';
 }
 
 /**
@@ -77,16 +78,20 @@ TwitchOAuth.prototype.confirmState = function (state) {
 	if (state !== this.state) throw new Error(`Authorization failed ${state} mismatch`);
 };
 
-TwitchOAuth.prototype.setAuthenticated = async function ({ access_token, refresh_token, expires_in }) {
-	this.authenticated.access_token = access_token;
-	this.authenticated.refresh_token = refresh_token;
-	this.authenticated.expires_in = expires_in;
-
+TwitchOAuth.prototype.makeAuthenticated = function ({ access_token, refresh_token, expires_in }) {
 	const d = new Date();
 	const ms = d.getTime();
+	return {
+		access_token: access_token,
+		refresh_token: refresh_token,
+		expires_in: expires_in,
+		expires_time: (ms + (expires_in * 1000)) - (SECONDS_OFF * 1000),
+		last_validated: ms
+	};
+};
 
-	this.authenticated.expires_time = (ms + (this.authenticated.expires_in * 1000)) - (this.secondsOff * 1000);
-	
+TwitchOAuth.prototype.setAuthenticated = function ({ access_token, refresh_token, expires_in }) {
+	this.authenticated = this.makeAuthenticated({ access_token, refresh_token, expires_in });
 	return access_token;
 };
 
@@ -136,14 +141,18 @@ TwitchOAuth.prototype.fetchRefreshTokenWithCredentials = async function (client_
 };
 
 TwitchOAuth.prototype.refreshTokenIfNeeded = async function () {
-	const d = new Date();
-	const time = d.getTime();
 
-	if (time > this.authenticated.expires_time) {
+	if (this.refreshTokenNeeded(this.authenticated)) {
 		return this.fetchRefreshToken();
 	}
 
 	return this.authenticated.access_token;
+};
+
+TwitchOAuth.prototype.refreshTokenNeeded = function (authenticated) {
+	const d = new Date();
+	const time = d.getTime();
+	return time > authenticated.expires_time;
 };
 
 TwitchOAuth.prototype.fetchEndpoint = async function (url, options) {
@@ -153,6 +162,20 @@ TwitchOAuth.prototype.fetchEndpoint = async function (url, options) {
 TwitchOAuth.prototype.fetchEndpointWithCredentials = async function (client_id, access_token, url, options) {
 	options.headers = getBearerHeaders(client_id, access_token);
 	return fetch(url, options).then(checkStatus).then(toResult);
+};
+
+/**
+ * 
+ * @param {string} client_id an applocation client id
+ * @param {string} access_token access token for the given client id
+ * 
+ */
+TwitchOAuth.prototype.validateWithCredentials = async function (client_id, access_token) {
+	const options = {
+		method: 'GET',
+		headers: getBearerHeaders(client_id, access_token),
+	};
+	return fetch(this.validateUrl, options).then(checkStatus).then(toResult);
 };
 
 /**
