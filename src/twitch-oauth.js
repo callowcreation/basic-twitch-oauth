@@ -25,6 +25,12 @@ function getBearerHeaders(client_id, access_token) {
 	};
 }
 
+/**
+ * 
+ * @param {response} res the response from the fetch request
+ * 
+ * @throws When request fails (res.status >= 200 && res.status < 300 acceptable status)
+ */
 async function checkStatus(res) {
 	if (!res.ok) throw new Error(res.statusText);
 	return res; // res.status >= 200 && res.status < 300
