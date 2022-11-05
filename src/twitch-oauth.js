@@ -36,10 +36,26 @@ async function checkStatus(res) {
 	return res; // res.status >= 200 && res.status < 300
 }
 
+/**
+ * 
+ * @param {response} res the response from the fetch request
+ * @returns true if response status is 200
+ */
+function statusOk(res) {
+    return res.status === 200;
+}
+
 async function toResult(res) {
 	const contentType = res.headers.get('content-type');
 	return contentType && contentType.includes('application/json') ? res.json() : res.text();
 }
+
+const OAUTH2_BASE_URL = 'https://id.twitch.tv/oauth2';
+const OAUTH2_URLS = {
+    AUTHORIZE: `${OAUTH2_BASE_URL}/authorize`,
+    VALIDATE: `${OAUTH2_BASE_URL}/validate`,
+    REVOKE: `${OAUTH2_BASE_URL}/revoke`,
+};
 
 function TwitchOAuth({ client_id, client_secret, redirect_uri, scopes }, state) {
 	this.client_id = client_id;
@@ -65,9 +81,7 @@ function TwitchOAuth({ client_id, client_secret, redirect_uri, scopes }, state) 
 	];
 	const urlQuery = urlParams.join('&');
 
-	this.authorizeUrl = `https://id.twitch.tv/oauth2/authorize?${urlQuery}`;
-	
-	this.validateUrl = 'https://id.twitch.tv/oauth2/validate';
+	this.authorizeUrl = `${OAUTH2_URLS.AUTHORIZE}?${urlQuery}`;
 }
 
 /**
@@ -171,8 +185,8 @@ TwitchOAuth.prototype.fetchEndpointWithCredentials = async function (client_id, 
 };
 
 /**
- * 
- * @param {string} client_id an applocation client id
+ * @deprecated since version 1.0.14 use {@link validateToken} or {@link validate} instead
+ * @param {string} client_id an application client id
  * @param {string} access_token access token for the given client id
  * 
  */
@@ -181,8 +195,58 @@ TwitchOAuth.prototype.validateWithCredentials = async function (client_id, acces
 		method: 'GET',
 		headers: getBearerHeaders(client_id, access_token),
 	};
-	return fetch(this.validateUrl, options).then(checkStatus).then(toResult);
+	return fetch(OAUTH2_URLS.VALIDATE, options).then(checkStatus).then(toResult);
 };
+
+/**
+ * 
+ * @param {string} access_token access token for the given client id
+ * 
+ */
+ TwitchOAuth.prototype.validateToken = async function (access_token) {
+    const options = {
+        headers: {
+            'Authorization': `OAuth ${access_token}`
+        },
+        method: 'GET'
+    };
+    return fetch(OAUTH2_URLS.VALIDATE, options).then(statusOk);
+};
+
+/**
+ * 
+ * @param {string} client_id an application client id
+ * @param {string} access_token access token for the given client id
+ * 
+ */
+TwitchOAuth.prototype.revokeToken = async function (client_id, access_token) {
+    const url = `${OAUTH2_URLS.REVOKE}?client_id=${client_id}&token=${access_token}`;
+    const options = {
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        method: 'POST'
+    };
+    return fetch(url, options).then(statusOk);
+}  
+
+/**
+ * 
+ * Validate the current access token
+ * 
+ */
+ TwitchOAuth.prototype.validate = async function () {
+    return this.validateToken(this.authenticated.access_token);
+};
+
+/**
+ * 
+ * Revoke the current access token
+ * 
+ */
+TwitchOAuth.prototype.revoke = async function () {
+    return this.revokeToken(this.client_id, this.authenticated.access_token);
+}
 
 /**
  * 
