@@ -1,4 +1,4 @@
-/lib
 /node_modules
+/lib
 *.env
 .vscode
