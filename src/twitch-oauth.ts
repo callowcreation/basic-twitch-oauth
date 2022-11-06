@@ -86,7 +86,7 @@ export default class TwitchOAuth {
      * 
      * @throws When request fails (res.status >= 200 && res.status < 300 acceptable status)
      */
-    private checkStatus(res: Response): Response {
+    private checkStatus(res: any): any {
         if (!res.ok) throw new Error(res.statusText);
         return res; // res.status >= 200 && res.status < 300
     }
@@ -96,7 +96,7 @@ export default class TwitchOAuth {
      * @param {response} res the response from the fetch request
      * @returns true if response status is 200
      */
-    private statusOk(res: Response): boolean {
+    private statusOk(res: any): boolean {
         return res.status === 200;
     }
 
@@ -203,7 +203,7 @@ export default class TwitchOAuth {
         return this.refreshTokenIfNeeded().then(access_token => this.fetchEndpointWithCredentials(this.client_id, access_token, url, options));
     }
 
-    private async fetchEndpointWithCredentials(client_id: string, access_token: string, url: string, options: RequestInit): Promise<any | string> {
+    private async fetchEndpointWithCredentials(client_id: string, access_token: string, url: string, options: Record<string, any>): Promise<any | string> {
         options.headers = this.getBearerHeaders(client_id, access_token);
         return fetch(url, options).then(this.checkStatus).then(this.toResult);
     }
@@ -276,7 +276,7 @@ export default class TwitchOAuth {
         return this.refreshTokenIfNeeded().then(access_token => this.requestWithCredentials<T>(this.client_id, access_token, url, options));
     }
 
-    private async requestWithCredentials<T>(client_id: string, access_token: string, url: string, options: RequestInit): Promise<T | string> {
+    private async requestWithCredentials<T>(client_id: string, access_token: string, url: string, options: Record<string, any>): Promise<T | string> {
         options.headers = this.getBearerHeaders(client_id, access_token);
         return fetch(url, options).then(this.checkStatus).then(this.result) as Promise<T | string>;
     }

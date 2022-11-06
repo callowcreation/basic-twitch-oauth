@@ -54,15 +54,15 @@ const twitchOAuth: TwitchOAuth = new TwitchOAuth({
     ]
 }, state);
 
-app.get('/', (req, res) => {
+app.get('/', (req: any, res: any) => {
     res.status(200).send(`<a href="/authorize">Authorize</a>`);
 });
 
-app.get('/home', (req, res) => {
+app.get('/home', (req: any, res: any) => {
     res.status(200).send(`<a href="/test">Test</a>`);
 });
 
-app.get('/test', async (req, res) => {
+app.get('/test', async (req: any, res: any) => {
     const url: string = `https://api.twitch.tv/helix/users/extensions?user_id=${101223367}`;
 
     try {
@@ -75,11 +75,11 @@ app.get('/test', async (req, res) => {
     }
 });
 
-app.get('/authorize', (req, res) => {
+app.get('/authorize', (req: any, res: any) => {
     res.redirect(twitchOAuth.authorizeUrl);
 });
 
-app.get('/auth-callback', async (req, res) => {
+app.get('/auth-callback', async (req: any, res: any) => {
     const req_data = qs.parse(req.url.split('?')[1]);
     const code = req_data['code'] as string;
     const state = req_data['state'] as string;
@@ -96,7 +96,7 @@ app.get('/auth-callback', async (req, res) => {
     }
 });
 
-app.get('/validate', async (req, res) => {
+app.get('/validate', async (req: any, res: any) => {
     try {
         const validated = await twitchOAuth.validate();
         const { ds, ts } = LogLocaleDateTime.make();
@@ -108,7 +108,7 @@ app.get('/validate', async (req, res) => {
     }
 });
 
-app.get('/revoke', async (req, res) => {
+app.get('/revoke', async (req: any, res: any) => {
     try {
         const revoked = await twitchOAuth.revoke();
         const { ds, ts } = LogLocaleDateTime.make();
