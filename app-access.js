@@ -2,40 +2,41 @@
 
 const TwitchAccess = require('./src/twitch-app-access');
 
-if (module === require.main) {
-    require('dotenv').config();
+require('dotenv').config();
 
-    const express = require('express');
+const express = require('express');
 
-    const app = express();
+const app = express();
 
-    const twitchOAuth = new TwitchAccess({
-        client_id: process.env.CLIENT_ID,
-        client_secret: process.env.CLIENT_SECRET,
-    });
+const twitchOAuth = new TwitchAccess({
+    client_id: process.env.CLIENT_ID,
+    client_secret: process.env.CLIENT_SECRET,
+});
 
-    app.get('/', (req, res) => {
-        res.status(200).send(`<a href="/test">Test</a>`);
-    });
+app.get('/', (req, res) => {
+    res.status(200).send(`<a href="/test">Test</a>`);
+});
 
-    app.get('/test', async (req, res) => {
-        const url = `https://api.twitch.tv/helix/users/extensions?user_id=${101223367}`;
+app.get('/test', async (req, res) => {
+    const url = `https://api.twitch.tv/helix/users/extensions?user_id=${101223367}`;
 
-        try {
-            const json = await twitchOAuth.getEndpoint(url);
-            res.status(200).json({ json });
-        } catch (err) {
-            console.error(err);
-            res.redirect('/failed');
-        }
-    });
+    try {
+        const json = await twitchOAuth.getEndpoint(url);
+        res.status(200).json({ json });
+    } catch (err) {
+        console.error(err);
+        res.redirect('/failed');
+    }
+});
 
-    const server = app.listen(process.env.PORT || 4000, async () => {
-        const port = server.address().port;
-        console.log(`Server listening on port ${port}`);
-        const result = await twitchOAuth.token();
-        console.log({result});
-    });
-}
-
-module.exports = TwitchAccess;
+module.exports = {
+    twitchOAuth,
+    listen: function () {
+        const server = app.listen(process.env.PORT || 4000, async () => {
+            const port = server.address().port;
+            console.log(`Server listening on port ${port}`);
+            const result = await twitchOAuth.token();
+            console.log({ result });
+        });
+    }
+};
