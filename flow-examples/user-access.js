@@ -1,6 +1,6 @@
 'use strict';
 
-const TwitchAccess = require('./src/twitch-user-access');
+const TwitchAccess = require('../src/user-access');
 
 require('dotenv').config();
 
@@ -45,6 +45,18 @@ app.get('/home', (req, res) => {
 
 app.get('/test', async (req, res) => {
     const url = `https://api.twitch.tv/helix/users/extensions?user_id=${101223367}`;
+
+    try {
+        const json = await twitchOAuth.getEndpoint(url);
+        res.status(200).json({ json });
+    } catch (err) {
+        console.error(err);
+        res.redirect('/failed');
+    }
+});
+
+app.get('/test/users', async (req, res) => {
+    const url = `https://api.twitch.tv/helix/users?id=${101223367}`;
 
     try {
         const json = await twitchOAuth.getEndpoint(url);

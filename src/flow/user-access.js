@@ -108,9 +108,9 @@ TwitchUserAccess.prototype.setAuthenticated = function ({ access_token, refresh_
     this.authenticated = this.makeAuthenticated({ access_token, refresh_token, expires_in });
     return access_token;
 };
-
 /**
- * 
+ * @class
+ * @alias module:UserAccess
  * @param code The OAuth 2.0 authorization code is a 30-character, 
  * randomly generated string.  It is used to make a request to the 
  * token endpoint in exchange for an access token.

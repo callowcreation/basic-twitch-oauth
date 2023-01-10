@@ -57,6 +57,9 @@ const OAUTH2_URLS = {
     REVOKE: `${OAUTH2_BASE_URL}/revoke`,
 };
 
+/**
+ * @deprecated Use {@link https://github.com/callowcreation/basic-twitch-oauth/blob/app-access/flow-examples/user-access.js User Access Flow}
+ */
 function TwitchOAuth({ client_id, client_secret, redirect_uri, scopes }, state) {
 	this.client_id = client_id;
 	this.client_secret = client_secret;

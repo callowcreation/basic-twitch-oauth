@@ -7,7 +7,7 @@
 'use strict';
 
 const fetch = require('node-fetch');
-const { OAUTH2_URLS } = require('./constants');
+const { OAUTH2_URLS } = require('../constants');
 
 const SECONDS_OFF = 60;
 
