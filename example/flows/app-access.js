@@ -1,6 +1,6 @@
 'use strict';
 
-const TwitchAccess = require('../src/flow/app-access');
+const TwitchAccess = require('../../src/flows/app-access');
 
 require('dotenv').config();
 

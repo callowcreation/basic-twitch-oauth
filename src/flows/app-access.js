@@ -35,7 +35,7 @@ async function toResult(res) {
     return contentType && contentType.includes('application/json') ? res.json() : res.text();
 }
 
-function TwitchAppAccess({ client_id, client_secret }) {
+function AppAccess({ client_id, client_secret }) {
     this.client_id = client_id;
     this.client_secret = client_secret;
 
@@ -47,7 +47,7 @@ function TwitchAppAccess({ client_id, client_secret }) {
     };
 }
 
-TwitchAppAccess.prototype.makeAuthenticated = function ({ access_token, token_type, expires_in }) {
+AppAccess.prototype.makeAuthenticated = function ({ access_token, token_type, expires_in }) {
     const d = new Date();
     const ms = d.getTime();
     return {
@@ -59,12 +59,12 @@ TwitchAppAccess.prototype.makeAuthenticated = function ({ access_token, token_ty
     };
 };
 
-TwitchAppAccess.prototype.setAuthenticated = function ({ access_token, token_type, expires_in }) {
+AppAccess.prototype.setAuthenticated = function ({ access_token, token_type, expires_in }) {
     this.authenticated = this.makeAuthenticated({ access_token, token_type, expires_in });
     return access_token;
 };
 
-TwitchAppAccess.prototype.token = async function () {
+AppAccess.prototype.token = async function () {
     const url = `${OAUTH2_URLS.TOKEN}?client_id=${this.client_id}&client_secret=${this.client_secret}&grant_type=client_credentials`;
     const options = {
         headers: {
@@ -82,7 +82,7 @@ TwitchAppAccess.prototype.token = async function () {
  * @throws When request fails
  * 
  */
-TwitchAppAccess.prototype.getEndpoint = async function (url) {
+AppAccess.prototype.getEndpoint = async function (url) {
     const headers = getBearerHeaders(this.client_id, this.authenticated.access_token);
     const options = {
         headers,
@@ -91,4 +91,4 @@ TwitchAppAccess.prototype.getEndpoint = async function (url) {
     return fetch(url, options).then(checkStatus).then(toResult);
 };
 
-module.exports = TwitchAppAccess;
+module.exports = AppAccess;

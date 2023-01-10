@@ -8,7 +8,7 @@
 
 const fetch = require('node-fetch');
 const { URLSearchParams } = require('url');
-const { OAUTH2_URLS } = require('./constants');
+const { OAUTH2_URLS } = require('../constants');
 
 const SECONDS_OFF = 60;
 
@@ -51,7 +51,7 @@ async function toResult(res) {
     return contentType && contentType.includes('application/json') ? res.json() : res.text();
 }
 
-function TwitchUserAccess({ client_id, client_secret, redirect_uri, scopes }, state) {
+function UserAccess({ client_id, client_secret, redirect_uri, scopes }, state) {
     this.client_id = client_id;
     this.client_secret = client_secret;
     this.redirect_uri = redirect_uri;
@@ -88,11 +88,11 @@ function TwitchUserAccess({ client_id, client_secret, redirect_uri, scopes }, st
  * @throws When state are not an exact match
  * 
  */
-TwitchUserAccess.prototype.confirmState = function (state) {
+UserAccess.prototype.confirmState = function (state) {
     if (state !== this.state) throw new Error(`Authorization failed ${state} mismatch`);
 };
 
-TwitchUserAccess.prototype.makeAuthenticated = function ({ access_token, refresh_token, expires_in }) {
+UserAccess.prototype.makeAuthenticated = function ({ access_token, refresh_token, expires_in }) {
     const d = new Date();
     const ms = d.getTime();
     return {
@@ -104,7 +104,7 @@ TwitchUserAccess.prototype.makeAuthenticated = function ({ access_token, refresh
     };
 };
 
-TwitchUserAccess.prototype.setAuthenticated = function ({ access_token, refresh_token, expires_in }) {
+UserAccess.prototype.setAuthenticated = function ({ access_token, refresh_token, expires_in }) {
     this.authenticated = this.makeAuthenticated({ access_token, refresh_token, expires_in });
     return access_token;
 };
@@ -118,7 +118,7 @@ TwitchUserAccess.prototype.setAuthenticated = function ({ access_token, refresh_
  * @throws When request fails
  * 
  */
-TwitchUserAccess.prototype.fetchToken = async function (code) {
+UserAccess.prototype.fetchToken = async function (code) {
     return fetch('https://id.twitch.tv/oauth2/token', {
         method: 'POST',
         headers: getBasicHeaders(this.client_id, this.client_secret),
@@ -132,7 +132,7 @@ TwitchUserAccess.prototype.fetchToken = async function (code) {
     }).then(checkStatus).then(toResult).then(json => this.setAuthenticated(json));
 };
 
-TwitchUserAccess.prototype.fetchRefreshToken = async function () {
+UserAccess.prototype.fetchRefreshToken = async function () {
     return this.fetchRefreshTokenWithCredentials(this.client_id, this.client_secret, this.authenticated.refresh_token).then(json => this.setAuthenticated(json));
 };
 
@@ -141,7 +141,7 @@ TwitchUserAccess.prototype.fetchRefreshToken = async function () {
  * Does not store credentials
  * 
  */
-TwitchUserAccess.prototype.fetchRefreshTokenWithCredentials = async function (client_id, client_secret, refresh_token) {
+UserAccess.prototype.fetchRefreshTokenWithCredentials = async function (client_id, client_secret, refresh_token) {
     return fetch('https://id.twitch.tv/oauth2/token', {
         method: 'POST',
         headers: getBasicHeaders(client_id, client_secret),
@@ -154,7 +154,7 @@ TwitchUserAccess.prototype.fetchRefreshTokenWithCredentials = async function (cl
     }).then(checkStatus).then(toResult);
 };
 
-TwitchUserAccess.prototype.refreshTokenIfNeeded = async function () {
+UserAccess.prototype.refreshTokenIfNeeded = async function () {
 
     if (this.refreshTokenNeeded(this.authenticated)) {
         return this.fetchRefreshToken();
@@ -163,17 +163,17 @@ TwitchUserAccess.prototype.refreshTokenIfNeeded = async function () {
     return this.authenticated.access_token;
 };
 
-TwitchUserAccess.prototype.refreshTokenNeeded = function (authenticated) {
+UserAccess.prototype.refreshTokenNeeded = function (authenticated) {
     const d = new Date();
     const time = d.getTime();
     return time > authenticated.expires_time;
 };
 
-TwitchUserAccess.prototype.fetchEndpoint = async function (url, options) {
+UserAccess.prototype.fetchEndpoint = async function (url, options) {
     return this.refreshTokenIfNeeded().then(access_token => this.fetchEndpointWithCredentials(this.client_id, access_token, url, options));
 };
 
-TwitchUserAccess.prototype.fetchEndpointWithCredentials = async function (client_id, access_token, url, options) {
+UserAccess.prototype.fetchEndpointWithCredentials = async function (client_id, access_token, url, options) {
     options.headers = getBearerHeaders(client_id, access_token);
     return fetch(url, options).then(checkStatus).then(toResult);
 };
@@ -184,7 +184,7 @@ TwitchUserAccess.prototype.fetchEndpointWithCredentials = async function (client
  * @param {string} access_token access token for the given client id
  * 
  */
-TwitchUserAccess.prototype.validateWithCredentials = async function (client_id, access_token) {
+UserAccess.prototype.validateWithCredentials = async function (client_id, access_token) {
     const options = {
         method: 'GET',
         headers: getBearerHeaders(client_id, access_token),
@@ -197,7 +197,7 @@ TwitchUserAccess.prototype.validateWithCredentials = async function (client_id, 
  * @param {string} access_token access token for the given client id
  * 
  */
-TwitchUserAccess.prototype.validateToken = async function (access_token) {
+UserAccess.prototype.validateToken = async function (access_token) {
     const options = {
         headers: {
             'Authorization': `OAuth ${access_token}`
@@ -213,7 +213,7 @@ TwitchUserAccess.prototype.validateToken = async function (access_token) {
  * @param {string} access_token access token for the given client id
  * 
  */
-TwitchUserAccess.prototype.revokeToken = async function (client_id, access_token) {
+UserAccess.prototype.revokeToken = async function (client_id, access_token) {
     const url = `${OAUTH2_URLS.REVOKE}?client_id=${client_id}&token=${access_token}`;
     const options = {
         headers: {
@@ -229,7 +229,7 @@ TwitchUserAccess.prototype.revokeToken = async function (client_id, access_token
  * Validate the current access token
  * 
  */
-TwitchUserAccess.prototype.validate = async function () {
+UserAccess.prototype.validate = async function () {
     return this.validateToken(this.authenticated.access_token);
 };
 
@@ -238,7 +238,7 @@ TwitchUserAccess.prototype.validate = async function () {
  * Revoke the current access token
  * 
  */
-TwitchUserAccess.prototype.revoke = async function () {
+UserAccess.prototype.revoke = async function () {
     return this.revokeToken(this.client_id, this.authenticated.access_token);
 }
 
@@ -249,7 +249,7 @@ TwitchUserAccess.prototype.revoke = async function () {
  * @throws When request fails
  * 
  */
-TwitchUserAccess.prototype.getEndpoint = async function (url) {
+UserAccess.prototype.getEndpoint = async function (url) {
     return this.fetchEndpoint(url, {
         method: 'GET'
     });
@@ -263,7 +263,7 @@ TwitchUserAccess.prototype.getEndpoint = async function (url) {
  * @throws When request fails
  * 
  */
-TwitchUserAccess.prototype.postEndpoint = async function (url, body) {
+UserAccess.prototype.postEndpoint = async function (url, body) {
     return this.fetchEndpoint(url, {
         method: 'POST',
         body: typeof body !== 'string' ? JSON.stringify(body) : body
@@ -278,7 +278,7 @@ TwitchUserAccess.prototype.postEndpoint = async function (url, body) {
  * @throws When request fails
  * 
  */
-TwitchUserAccess.prototype.putEndpoint = async function (url, body) {
+UserAccess.prototype.putEndpoint = async function (url, body) {
     return this.fetchEndpoint(url, {
         method: 'PUT',
         body: typeof body !== 'string' ? JSON.stringify(body) : body
@@ -293,7 +293,7 @@ TwitchUserAccess.prototype.putEndpoint = async function (url, body) {
  * @throws When request fails
  * 
  */
-TwitchUserAccess.prototype.patchEndpoint = async function (url, body) {
+UserAccess.prototype.patchEndpoint = async function (url, body) {
     return this.fetchEndpoint(url, {
         method: 'PATCH',
         body: typeof body !== 'string' ? JSON.stringify(body) : body
@@ -307,14 +307,14 @@ TwitchUserAccess.prototype.patchEndpoint = async function (url, body) {
  * @throws When request fails
  * 
  */
-TwitchUserAccess.prototype.deleteEndpoint = async function (url) {
+UserAccess.prototype.deleteEndpoint = async function (url) {
     return this.fetchEndpoint(url, {
         method: 'DELETE'
     });
 };
 
-TwitchUserAccess.prototype.getAuthenticated = function () {
+UserAccess.prototype.getAuthenticated = function () {
     return this.authenticated;
 };
 
-module.exports = TwitchUserAccess;
+module.exports = UserAccess;
