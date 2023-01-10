@@ -1,6 +1,6 @@
 'use strict';
 
-const TwitchOAuth = require('./src/twitch-oauth');
+const TwitchAccess = require('./src/twitch-user-access');
 
 if (module === require.main) {
     require('dotenv').config();
@@ -14,7 +14,7 @@ if (module === require.main) {
     const buffer = crypto.randomBytes(16);
     const state = buffer.toString('hex');
 
-    const twitchOAuth = new TwitchOAuth({
+    const twitchOAuth = new TwitchAccess({
         client_id: process.env.CLIENT_ID,
         client_secret: process.env.CLIENT_SECRET,
         redirect_uri: process.env.REDIRECT_URI,
@@ -110,4 +110,4 @@ if (module === require.main) {
     });
 }
 
-module.exports = TwitchOAuth;
+module.exports = TwitchAccess;
