@@ -2,10 +2,10 @@
 
 if (process.argv[2] && process.argv[2] === '-a') {
     console.log('App access implementation.');
-    const { listen } = require('./example/flows/app-access');
-    listen();
+    const { appAccess } = require('./example/flows');
+    appAccess.listen();
 } else {
     console.log('User access implementation.');
-    const { listen } = require('./example/flows/user-access');
-    listen();
+    const { userAccess } = require('./example/flows');
+    userAccess.listen();
 }
