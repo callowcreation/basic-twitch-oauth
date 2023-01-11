@@ -1,6 +1,6 @@
 {
   "name": "@callowcreation/basic-twitch-oauth",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Intended to reduce the expected prerequisite experience required for implementing Twitch OAuth to use the Twitch API(s)",
   "main": "app.js",
   "scripts": {
