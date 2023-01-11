@@ -58,7 +58,7 @@ const OAUTH2_URLS = {
 };
 
 /**
- * @deprecated Use {@link https://github.com/callowcreation/basic-twitch-oauth/blob/app-access/flow-examples/user-access.js User Access Flow}
+ * @deprecated Use {@link https://github.com/callowcreation/basic-twitch-oauth/blob/e2d91ea962590775655ca890491bde45d8cca163/example/flows/user-access.js User Access Flow}
  */
 function TwitchOAuth({ client_id, client_secret, redirect_uri, scopes }, state) {
 	this.client_id = client_id;
